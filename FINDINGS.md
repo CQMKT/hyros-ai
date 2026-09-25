@@ -379,3 +379,28 @@ URLs), so these are query work, not tracking changes:
 Bounce rate, visit duration, views per visit and exit pages need the
 tracking script to emit session structure — a product decision, pitched
 separately.
+
+## 18. Write tools: names documented, argument shapes not (Call Intelligence)
+
+`api-docs.hyros.com/ai-context/mcp.txt` (MCP reference) lists 66 tools, 31
+of them writes — among them `hyros_create_call`, `hyros_update_call`,
+`hyros_add_tags_to_leads`, `hyros_create_lead`, `hyros_update_lead` — but
+itemises no argument fields for them ("accepts lead id and/or email and
+applies one or more tags" is all it says about tags). Every write returns
+a `requestId` for status polling; blacklisted emails are rejected without
+one.
+
+What the Call Intelligence write-back sends today, by analogy with the
+REST bodies and the `{ request }` wrapper every other tool takes:
+
+- `hyros_add_tags_to_leads { request: { emails: [email], tags: [...] } }`
+- `hyros_create_call { request: { email, callDate (ISO), status:
+  QUALIFIED | NOT_QUALIFIED | NO_SHOW | UNKNOWN, name } }` (experimental,
+  off by default)
+
+Both run against the mock in `npm run check`; the live shapes are
+**unverified** until the first deployment with write-back switched on
+(the result — including the MCP's error text — is stored on each call as
+`writeBack`, so a wrong shape is visible, not silent). Ask: document the
+request shape and the `status` enum of `hyros_create_call`, and whether
+`hyros_add_tags_to_leads` creates unknown tags or requires them to exist.

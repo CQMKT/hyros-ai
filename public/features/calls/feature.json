@@ -1,0 +1,14 @@
+{
+  "id": "calls",
+  "name": "Call Intelligence",
+  "tab": "Call Intelligence",
+  "version": "1.0.0",
+  "description": "Sales-call transcripts from Fathom, Fireflies or paste, analyzed into a deal summary, lead score, rep scorecard, buying language, objections and avatar — each call joined to its HYROS attribution.",
+  "mode": "both",
+  "demo": true,
+  "server": true,
+  "style": true,
+  "needs": [],
+  "tools": [],
+  "author": "CQ Marketing"
+}

@@ -4,6 +4,47 @@ All notable changes to the AI HYROS dashboard template are recorded here.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/)
 and the project uses [Semantic Versioning](https://semver.org/).
 
+## [Unreleased] — Call Intelligence (this fork)
+
+### Added
+- **Call Intelligence tab** (`public/features/calls/`). Sales-call
+  transcripts from **Fathom** and **Fireflies** webhooks (or pasted in)
+  are analyzed into a deal summary, a 0–100 lead score against the
+  account's own grading criteria, a rep scorecard, buying-language
+  signals, objections, prospect intelligence (demographics,
+  psychographics, pain points, desires, verbatim language) and an avatar.
+  The prospect's email is matched to the HYROS lead (`hyros_get_leads`),
+  so every call carries its first/last source and stage; the **By source**
+  view shows lead quality and close rate per ad set, campaign and rep.
+- **Knowledge base** per account (`/api/kb`): company info, context
+  entries, lead grading criteria (must total 100), rep scorecards (BANT,
+  MEDDIC, Challenger, High-Ticket Close templates), avatars, and an opt-in
+  **write-back** that tags the matched HYROS lead (`ai-score-88`,
+  `ai-hot`, `ai-follow-up`, avatar) and optionally logs the call
+  (`hyros_add_tags_to_leads`, `hyros_create_call`).
+- **Integrations** (`/api/integrations`): the model API key and the
+  Fathom / Fireflies keys are probed, AES-256-GCM encrypted like HYROS keys
+  and never shown again. Fathom's webhook is registered automatically;
+  Fireflies shows the URL + signing secret to paste into its Developer
+  settings. Backfill imports the last N days of meetings.
+- **Webhook receiver** `/api/ingest?src=…&t=<token>`: signature-verified
+  (Standard Webhooks HMAC for Fathom, `x-hub-signature` for Fireflies),
+  deduplicated on the vendor id, analyzed in the background via Vercel's
+  `waitUntil` (inline when unavailable).
+- `scripts/calls-test.mjs` (in `npm run check`) covers the pipeline
+  against an in-memory KV, the mock MCP and a mock model API
+  (`scripts/mock-llm.mjs`).
+
+### Changed
+- `/api/refresh` hands the analyzed-calls index into the build
+  (`buildSnapshot({ callIntel })`) so the tab works from the one-document
+  snapshot; `public/app.js` scopes `/api/calls`, `/api/kb` and
+  `/api/integrations` to the selected account; `vercel.json` gives the new
+  functions their duration and bundles `public/features/**`.
+- `scripts/store-test.mjs` ends with `process.exitCode` instead of
+  `process.exit()` (Node 24 on Windows tripped a libuv assertion with an
+  in-flight lookup at exit).
+
 ## [0.2.3] — 2026-09-24
 
 ### Fixed

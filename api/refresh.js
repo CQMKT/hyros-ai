@@ -15,6 +15,8 @@ import { McpNotConfigured } from './_mcp.js';
 import { accountFromReq, asAccount, listAccounts, markKeyStatus, noteRefresh, syncClients } from './_accounts.js';
 import { logEvent } from './_log.js';
 import { REFRESH_MAX_S, REFRESH_BUDGET_MS, CRON_BUDGET_MS, CRON_MIN_ACCOUNT_MS, cronAccountBudgetMs } from './_budget.js';
+import { readIndex } from './_calls.js';
+import { readKb } from './_kb.js';
 
 /**
  * Vercel function limit (seconds). Also declared in vercel.json so the
@@ -29,10 +31,12 @@ async function refreshAccount(accountId, steps, budgetMs) {
   const [prefs, previous] = storeConfigured()
     ? await Promise.all([readPrefs(accountId), readSnapshot(accountId)])
     : [null, null];
+  // Call Intelligence: the analyzed-calls index (KV, written as calls arrive) rides into the snapshot as callIntel.
+  const callIntel = storeConfigured() ? await readIndex(accountId).then(async (idx) => ({ ...idx, avatars: (await readKb(accountId)).avatars })).catch(() => null) : null;
   let snapshot;
   try {
     snapshot = await asAccount(accountId, () =>
-      buildSnapshot({ onProgress: (s) => steps.push(`${accountId}: ${s}`), prefs, previous, budgetMs }));
+      buildSnapshot({ onProgress: (s) => steps.push(`${accountId}: ${s}`), prefs, previous, budgetMs, callIntel }));
   } catch (err) {
     logEvent('refresh.failed', { accountId, code: err.code || err.name || 'error', message: err.message, ms: Date.now() - started });
     // Only a rejected key (401) marks the account (or its agency) invalid so

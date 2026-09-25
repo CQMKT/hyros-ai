@@ -70,7 +70,7 @@ const state = {
 /* Where to report a problem with the template (the docs owner keeps this current). */
 const REPO_URL = 'https://github.com/Hyros-AI/hyros-ai';
 
-const ACCOUNT_SCOPED = new Set(['/api/data', '/api/refresh', '/api/drill', '/api/prefs', '/api/health']);
+const ACCOUNT_SCOPED = new Set(['/api/data', '/api/refresh', '/api/drill', '/api/prefs', '/api/health', '/api/calls', '/api/kb', '/api/integrations']);
 
 /* Demo mode caches: the real snapshot to restore, and both attribution views. */
 let realCache = null;

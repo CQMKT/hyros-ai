@@ -305,10 +305,10 @@ try {
   // nearly the whole budget: 100 s -> a 50 s fair share, raised to the floor.
   const snapFeat = await buildSnapshot({ now: new Date('2026-09-14T12:00:00Z'), prefs, budgetMs: 100000, onProgress: (s) => featSteps.push(s) });
   const shareOf = (id) => Number((featSteps.find((s) => s.startsWith(`feature ${id} (`)) || '').match(/\((\d+)s\)/)?.[1]);
-  check('scale gets the 60 s floor (not its 50 s fair share); health (last) gets everything left (~100 s)', shareOf('scale') === 60 && shareOf('health') >= 95 && snapFeat.health.scripts['https://example.test/'] === 'SCRIPT_FOUND', JSON.stringify(featSteps.filter((s) => /^feature/.test(s))));
+  check('scale and health get the 60 s floor (not their 33 s fair share); calls (last) gets everything left (~100 s)', shareOf('scale') === 60 && shareOf('health') === 60 && shareOf('calls') >= 95 && snapFeat.health.scripts['https://example.test/'] === 'SCRIPT_FOUND', JSON.stringify(featSteps.filter((s) => /^feature/.test(s))));
   const fullSteps = [];
   await buildSnapshot({ now: new Date('2026-09-14T12:00:00Z'), prefs, onProgress: (s) => fullSteps.push(s) });
-  check('unspent core + CRM time flows to the features: on the full budget both steps get well over the floor', fullSteps.some((s) => /^feature scale \((\d+)s\)$/.test(s) && Number(s.match(/\((\d+)s\)/)[1]) >= 100), JSON.stringify(fullSteps.filter((s) => /^feature/.test(s))));
+  check('unspent core + CRM time flows to the features: on the full budget every step gets well over the floor (290 s / 3 steps)', fullSteps.some((s) => /^feature scale \((\d+)s\)$/.test(s) && Number(s.match(/\((\d+)s\)/)[1]) >= 90), JSON.stringify(fullSteps.filter((s) => /^feature/.test(s))));
   const { featureCtx } = await import('../api/_features.js');
   const fctx = featureCtx({ id: 'health', manifest: { id: 'health' }, snapshot: snap, previous: null, deadline: Date.now() + 800 });
   check('featureCtx exposes timeouts, timeLeft and the tool calls', fctx.timeouts.slow === 45000 && fctx.timeLeft() > 0 && fctx.timeLeft() <= 800 && typeof fctx.callTool === 'function' && typeof fctx.callToolPagedInfo === 'function', JSON.stringify(Object.keys(fctx)));

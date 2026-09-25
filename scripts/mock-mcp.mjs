@@ -167,6 +167,7 @@ const TOOLS = {
   },
   hyros_get_stages: () => ({ result: [{ name: 'Lead', amount: 120 }, { name: 'Customer', amount: 40 }], nextPageId: null }),
   hyros_get_leads: ({ request }) => {
+    if (request.emails) return { result: request.emails.filter((e) => /^lead\d+@/.test(e)).map((e, i) => ({ ...lead(i + 1, '2026-09-02T10:00:00-05:00', '2026-09-02T10:00:00-05:00'), email: e })), nextPageId: null };
     if (request.updatedFromDate) {
       // Incremental pull: one changed lead (stage moved), one brand-new lead,
       // and one that was merged into lead-1 (the API marks it with originLead).
@@ -181,6 +182,9 @@ const TOOLS = {
   },
   hyros_get_sales: () => ({ result: SALES, nextPageId: null }),
   hyros_get_calls: () => ({ result: [], nextPageId: null }),
+  // Write tools (mcp.txt lists the names; argument shapes are undocumented — the mock accepts the { request } form the app sends).
+  hyros_add_tags_to_leads: ({ request }) => { if (!request?.emails?.length || !request?.tags?.length) throw new ToolError('hyros_add_tags_to_leads: emails and tags are required'); return { requestId: 'req-tags-1' }; },
+  hyros_create_call: ({ request }) => { if (!request?.email) throw new ToolError('hyros_create_call: email is required'); return { requestId: 'req-call-1' }; },
   hyros_get_subscriptions: () => ({ result: [], nextPageId: null }),
   hyros_get_lead_journey: ({ request, emails }) => journeyEmails(request, emails).map((email) => ({
     lead: lead(1, '2026-09-02T10:00:00-05:00', '2026-09-02T10:00:00-05:00'),

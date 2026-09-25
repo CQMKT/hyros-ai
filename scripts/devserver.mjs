@@ -129,6 +129,26 @@ const server = createServer(async (req, res) => {
     acct.lastRefresh = new Date().toISOString();
     return json(res, 200, { ok: true, account, persisted: true, ms: 1200, steps: ['dev: served the synthetic seed'], generatedAt: acct.lastRefresh });
   }
+  // Call Intelligence stubs: the seed's demo block stands in for the KV index; writes need a deployed API.
+  if (url.pathname === '/api/calls') {
+    const seed = JSON.parse(await readFile(new URL('../data/seed.json', import.meta.url), 'utf8'));
+    const blk = seed.calls || { rows: [], avatars: [], calls: {} };
+    if (req.method === 'GET') {
+      const id = url.searchParams.get('id');
+      if (id) return blk.calls?.[id] ? json(res, 200, { ok: true, call: blk.calls[id] }) : json(res, 404, { ok: false, error: 'not_found' });
+      return json(res, 200, { ok: true, rows: blk.rows, avatars: blk.avatars, updatedAt: blk.updatedAt, truncated: false, dropped: 0, connected: { anthropic: false, fathom: false, fireflies: false }, writeBack: { enabled: false }, readOnly: null, dev: true });
+    }
+    return json(res, 200, { ok: false, error: 'dev', message: 'Dev server has no model API or KV — paste, analyze and delete need a deployed API. The Demo account shows the full flow.' });
+  }
+  if (url.pathname === '/api/kb') {
+    const { defaultKb, SCORECARD_TEMPLATES, DEFAULT_LEAD_CRITERIA, OUTCOMES } = await import('../api/_kb.js');
+    if (req.method === 'GET') return json(res, 200, { ok: true, kb: defaultKb(), problems: [], templates: SCORECARD_TEMPLATES, defaultLeadCriteria: DEFAULT_LEAD_CRITERIA, outcomes: OUTCOMES, readOnly: null });
+    return json(res, 200, { ok: false, error: 'dev', message: 'Dev server has no KV — the knowledge base is saved on a deployed API only.' });
+  }
+  if (url.pathname === '/api/integrations') {
+    if (req.method === 'GET') return json(res, 200, { ok: true, items: [], firefliesSecret: null, origin: 'http://127.0.0.1:4321', kinds: ['anthropic', 'fathom', 'fireflies'], readOnly: null });
+    return json(res, 200, { ok: false, error: 'dev', message: 'Dev server cannot reach vendors — connect integrations on a deployed API.' });
+  }
   if (url.pathname === '/api/health') {
     // The real route lists which of the 15 required tools the key cannot see; the stub pretends two are absent.
     return json(res, 200, { ok: true, setup: dev.state, dev: true, templateVersion: TEMPLATE_VERSION, toolCount: 13, hasAttributionTool: true, missingTools: ['hyros_get_lead_journey', 'hyros_get_lead_clicks'] });

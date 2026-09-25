@@ -140,6 +140,19 @@ the tab says so instead of showing an empty chart.
 **Tracking Health** — domains, script presence per URL, Google tracking
 parameters per integration.
 
+**Call Intelligence** — sales-call transcripts from Fathom or Fireflies
+(webhooks, backfill) or pasted in, analyzed into a deal summary, a 0–100
+lead score against your own grading criteria, a rep scorecard, buying
+language, objections, prospect intelligence and an avatar. The prospect's
+email is matched to the HYROS lead, so every call carries its first/last
+source and stage — the **By source** view shows lead quality and close
+rate per ad set, campaign and rep. Scores can be pushed back into HYROS as
+lead tags. Setup lives in the tab: Call Intelligence → Setup → connect the
+model API key (Anthropic), Fathom (webhook registered for you) and/or
+Fireflies (paste the webhook URL + secret into Fireflies → Settings →
+Developer settings), then edit the knowledge base. See
+[`public/features/calls/SPEC.md`](./public/features/calls/SPEC.md).
+
 **Accounts** — any number of HYROS accounts in one dashboard, switched from
 the top-left menu. An agency key adds every approved client account (5 per
 call) and the daily refresh rotates through the stalest ones.

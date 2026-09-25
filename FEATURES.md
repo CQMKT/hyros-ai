@@ -259,3 +259,19 @@ for the pure-function tests (curve normaliser, view states, budget rules).
 7. Bump `version` whenever the block shape changes. Nothing checks it at
    runtime — an old snapshot meets the new view until the next refresh, so
    read new fields with fallbacks for one release.
+
+## Features that need core routes
+
+A feature's `server.js` runs only during `/api/refresh` and cannot add
+routes, but a feature may *depend* on routes its fork adds under `api/`
+(the Call Intelligence tab needs `/api/calls`, `/api/kb`,
+`/api/integrations` and the `/api/ingest` webhook). When that is the case:
+
+- the feature's `SPEC.md` "Porting notes" lists every core file another
+  fork must copy, and the block shape still works without them (the tab
+  renders from the snapshot; live actions fail with a message);
+- the core hands what the feature needs into the snapshot before the
+  feature steps run (`buildSnapshot({ callIntel })` → `snapshot.callIntel`)
+  so `server.js` stays a pure copy with zero MCP calls;
+- new account-scoped routes are added to `ACCOUNT_SCOPED` in
+  `public/app.js` so `ctx.api(path)` carries `?account=`.

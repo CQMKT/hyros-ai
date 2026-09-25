@@ -209,4 +209,5 @@ console.log('\nOversized snapshots are trimmed before storing');
 
 
 console.log(fails ? `\n${fails} FAILURE(S)\n` : '\nAll store + API contract checks pass.\n');
-process.exit(fails ? 1 : 0);
+// Let the loop drain instead of process.exit(): on Windows, exiting with an in-flight lookup trips a libuv assertion (UV_HANDLE_CLOSING).
+process.exitCode = fails ? 1 : 0;

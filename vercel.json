@@ -9,7 +9,10 @@
     }
   ],
   "functions": {
-    "api/refresh.js": { "maxDuration": 300, "includeFiles": "public/features/**" }
+    "api/refresh.js": { "maxDuration": 300, "includeFiles": "public/features/**" },
+    "api/calls.js": { "maxDuration": 300, "includeFiles": "public/features/**" },
+    "api/ingest.js": { "maxDuration": 300, "includeFiles": "public/features/**" },
+    "api/integrations.js": { "maxDuration": 120, "includeFiles": "public/features/**" }
   },
   "headers": [
     {
