@@ -465,7 +465,7 @@ export function fitSnapshot(snapshot, maxBytes = SNAPSHOT_MAX_BYTES) {
 /* ---------------- top level ---------------- */
 
 export async function buildSnapshot({
-  now = new Date(), onProgress = () => {}, prefs = null, previous = null, budgetMs = DEFAULT_BUDGET_MS, callIntel = null,
+  now = new Date(), onProgress = () => {}, prefs = null, previous = null, budgetMs = DEFAULT_BUDGET_MS, callIntel = null, payIntel = null,
 } = {}) {
   const started = Date.now();
   // Proportional reservations (api/_budget.js): the core (account, sources,
@@ -649,7 +649,7 @@ export async function buildSnapshot({
 
   // Feature server steps (Scale Advisor, Tracking Health, anything a user
   // adds under public/features/) — best-effort inside the remaining budget.
-  const core = { schema: 2, attributionModel: model, settings, adAccounts: accounts.map((a) => ({ id: String(a.id), name: a.name, type: a.type })), ranges: out, crm, warnings, callIntel, account: { email: user?.userProfile?.email || null, timezone: tz } };
+  const core = { schema: 2, attributionModel: model, settings, adAccounts: accounts.map((a) => ({ id: String(a.id), name: a.name, type: a.type })), ranges: out, crm, warnings, callIntel, payIntel, account: { email: user?.userProfile?.email || null, timezone: tz } };
   const featureBlocks = await runFeatureSteps({ snapshot: core, previous, deadline, onProgress });
 
   return {
@@ -676,6 +676,7 @@ export async function buildSnapshot({
     crm,
     warnings,
     callIntel,
+    payIntel,
     ...featureBlocks,
     buildMs: Date.now() - started,
   };

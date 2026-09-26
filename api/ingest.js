@@ -23,6 +23,48 @@ import { analyzeCall } from './_analyze.js';
 import { storeConfigured, storeReadOnly } from './_store.js';
 import { REFRESH_MAX_S } from './_budget.js';
 import { logEvent } from './_log.js';
+import { verifySignature as verifyStripe, txFromEvent } from './_stripe.js';
+import { verifySignature as verifyWhop, paymentFromEvent, normalizePayment, retrievePayment } from './_whop.js';
+import { readLinks, recordTransaction, readSettings, notify } from './_paylinks.js';
+
+/**
+ * Stripe / Whop deliveries: verify, turn the event into a transaction, store
+ * it next to what the thank-you page recorded (same id → merged). Failed
+ * payments are logged as their own rows so the dashboard can list them.
+ */
+async function handlePayment({ src, accountId, integration, headers, body, res }) {
+  const secret = integration.secretEnc ? decryptKey(integration.secretEnc) : null;
+  const verdict = src === 'stripe' ? verifyStripe(headers['stripe-signature'], body, secret) : verifyWhop(headers, body, secret);
+  if (!verdict.ok) {
+    await noteEvent(accountId, integration.id, { error: `Rejected a delivery: ${verdict.reason}` });
+    logEvent('ingest.rejected', { accountId, src, reason: verdict.reason });
+    return res.status(401).json({ ok: false, error: 'bad_signature', reason: verdict.reason });
+  }
+  let payload;
+  try { payload = JSON.parse(body || '{}'); } catch { return res.status(400).json({ ok: false, error: 'bad_json' }); }
+  let tx = null;
+  try {
+    if (src === 'stripe') tx = txFromEvent(payload);
+    else {
+      const { type, payment } = paymentFromEvent(payload);
+      if (!/payment|succeed|paid/i.test(type) && !payment) return res.status(200).json({ ok: true, ignored: `event ${type || 'unknown'}` });
+      if (payment?.id && (!payment.user?.email && !payment.email)) { const key = await integrationKey(accountId, 'whop'); tx = key ? await retrievePayment(key, payment.id) : normalizePayment(payment); }
+      else tx = payment ? normalizePayment(payment) : null;
+      if (tx) tx.event = type || 'payment.succeeded';
+    }
+  } catch (err) {
+    await noteEvent(accountId, integration.id, { error: err.message });
+    return res.status(502).json({ ok: false, error: err.code || 'vendor', message: err.message });
+  }
+  if (!tx) return res.status(200).json({ ok: true, ignored: `event ${payload.type || payload.action || 'unknown'}` });
+  const links = await readLinks(accountId);
+  const link = links.find((l) => (tx.metadata?.aihyros_link && l.token === tx.metadata.aihyros_link) || (tx.paymentLinkId && (l.stripeId === tx.paymentLinkId || l.whopPlanId === tx.paymentLinkId))) || null;
+  const { tx: stored, created } = await recordTransaction(accountId, tx, { via: 'webhook', linkId: link?.id || null, linkToken: link?.token || null });
+  await noteEvent(accountId, integration.id);
+  logEvent('ingest.payment', { accountId, src, event: tx.event, txId: stored.id, status: stored.status, created, linked: Boolean(link) });
+  if (created && (stored.status === 'paid' || stored.status === 'failed')) { try { await notify(await readSettings(accountId), stored, { linkName: link?.name || null }); } catch { /* best effort */ } }
+  return res.status(200).json({ ok: true, id: stored.id, status: stored.status, duplicate: !created });
+}
 
 export const maxDuration = REFRESH_MAX_S;
 /** The raw bytes are needed for the HMAC — keep Vercel's body parser out of the way. */
@@ -55,7 +97,7 @@ export default async function handler(req, res) {
   const url = new URL(req.url, `http://${req.headers.host || 'local'}`);
   const src = url.searchParams.get('src');
   const token = url.searchParams.get('t');
-  if (!['fathom', 'fireflies'].includes(src)) return res.status(400).json({ ok: false, error: 'bad_request' });
+  if (!['fathom', 'fireflies', 'stripe', 'whop'].includes(src)) return res.status(400).json({ ok: false, error: 'bad_request' });
   if (!storeConfigured()) return res.status(503).json({ ok: false, error: 'needs_storage' });
   if (storeReadOnly()) return res.status(200).json({ ok: true, ignored: 'preview deployment (read-only)' });
 
@@ -64,6 +106,7 @@ export default async function handler(req, res) {
   const { accountId, integration } = found;
   const body = await rawBody(req);
   const headers = lowerHeaders(req);
+  if (src === 'stripe' || src === 'whop') return handlePayment({ src, accountId, integration, headers, body, res });
 
   const secret = integration.secretEnc ? decryptKey(integration.secretEnc) : null;
   const verdict = src === 'fathom' ? verifyFathom(headers, body, secret) : verifyFireflies(headers, body, secret);

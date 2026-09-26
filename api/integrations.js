@@ -52,7 +52,7 @@ export default async function handler(req, res) {
       logEvent('integrations.backfill', { accountId, kind: body.kind, added, duplicates, more: r.more });
       return res.status(200).json({ ok: true, added, duplicates, more: r.more, message: `${added} call${added === 1 ? '' : 's'} queued${duplicates ? ` (${duplicates} already known)` : ''}. Analyze them from the Calls tab.` });
     }
-    const it = await addIntegration(accountId, { kind: body.kind, apiKey: body.apiKey, origin, model: body.model || null });
+    const it = await addIntegration(accountId, { kind: body.kind, apiKey: body.apiKey, origin, model: body.model || null, webhookSecret: body.webhookSecret || null });
     logEvent('integrations.added', { accountId, kind: it.kind, webhook: Boolean(it.webhookId) });
     return res.status(200).json({ ok: true, item: publicIntegration(it, { origin }), firefliesSecret: it.kind === 'fireflies' ? await firefliesSecret(accountId) : undefined });
   } catch (err) {

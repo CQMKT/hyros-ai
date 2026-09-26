@@ -149,6 +149,24 @@ const server = createServer(async (req, res) => {
     if (req.method === 'GET') return json(res, 200, { ok: true, items: [], firefliesSecret: null, origin: 'http://127.0.0.1:4321', kinds: ['anthropic', 'fathom', 'fireflies'], readOnly: null });
     return json(res, 200, { ok: false, error: 'dev', message: 'Dev server cannot reach vendors — connect integrations on a deployed API.' });
   }
+  // Payment Links stubs: the seed's demo block stands in for KV; writes and vendors need a deployed API.
+  if (url.pathname === '/api/paylinks') {
+    const seed = JSON.parse(await readFile(new URL('../data/seed.json', import.meta.url), 'utf8'));
+    const blk = seed.paylinks || { links: [], rows: [] };
+    if (req.method === 'GET') {
+      const base = 'http://127.0.0.1:4321';
+      return json(res, 200, { ok: true, origin: base, base, links: blk.links.map((l) => ({ ...l, thankYouUrl: `${base}/ty?l=${l.token}`, sales: 0, revenueCents: 0 })), rows: blk.rows, totals: null, updatedAt: blk.updatedAt, truncated: false, settings: { template: 'light', headline: 'Thank You for Your Purchase!', message: 'Your payment was successful. We appreciate your business!', logoUrl: '', brand: '', accent: '', showOrder: true, showEmail: true, redirectUrl: '', countdownS: 0, domain: '', trackingScript: '', trackingSource: null, notifyUrl: '', updatedAt: null }, connected: { stripe: false, whop: false }, readOnly: null, dev: true });
+    }
+    const body = await readBody(req);
+    if (body.action === 'preview') { const { renderPage } = await import('../api/ty.js'); return json(res, 200, { ok: true, html: renderPage({ settings: body.settings || {}, tx: { externalId: 'cs_test_SAMPLE0MW6J9Z8K', amountCents: 100, currency: 'usd', status: 'paid', items: [{ description: 'Sample product', quantity: 1, amountCents: 100 }] }, email: 'buyer@example.com', link: { name: 'Sample link' }, script: false }) }); }
+    return json(res, 200, { ok: false, error: 'dev', message: 'Dev server has no Stripe or KV — create, import and verify need a deployed API.' });
+  }
+  if (url.pathname === '/ty') {
+    const { renderPage } = await import('../api/ty.js');
+    const email = url.searchParams.get('email');
+    res.writeHead(200, { 'content-type': 'text/html; charset=utf-8' });
+    return res.end(renderPage({ settings: { template: url.searchParams.get('template') || 'light', brand: 'Dev preview' }, tx: email ? { externalId: 'cs_test_DEV', amountCents: 100, currency: 'usd', status: 'paid', items: [{ description: 'Dev product', quantity: 1, amountCents: 100 }] } : null, email, link: { name: 'Dev link' }, script: false }));
+  }
   if (url.pathname === '/api/health') {
     // The real route lists which of the 15 required tools the key cannot see; the stub pretends two are absent.
     return json(res, 200, { ok: true, setup: dev.state, dev: true, templateVersion: TEMPLATE_VERSION, toolCount: 13, hasAttributionTool: true, missingTools: ['hyros_get_lead_journey', 'hyros_get_lead_clicks'] });

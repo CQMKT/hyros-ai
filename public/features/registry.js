@@ -6,4 +6,4 @@
  * unplug a feature without deleting it; `scripts/feature-pack.mjs --install`
  * appends ids for imported packs.
  */
-export const FEATURES = ['funnel', 'adltv', 'scale', 'health', 'calls'];
+export const FEATURES = ['funnel', 'adltv', 'scale', 'health', 'calls', 'paylinks'];

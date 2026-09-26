@@ -1,0 +1,49 @@
+/* Payment Links — feature-scoped styles (tokens from public/styles.css only) */
+.paylinks-nav { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin: 0 0 14px; }
+.paylinks-nav .spacer { flex: 1; }
+.paylinks-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+.paylinks-table th, .paylinks-table td { text-align: left; white-space: normal; }
+.paylinks-table td.num, .paylinks-table th.num { text-align: right; white-space: nowrap; }
+.paylinks-table .paylinks-title { font-weight: 500; color: var(--ink); }
+.paylinks-table .paylinks-meta { display: block; color: var(--ink-3); font-size: 11.5px; margin-top: 2px; }
+.paylinks-url { font-family: var(--mono); font-size: 10.5px; color: var(--ink-2); word-break: break-all; }
+.paylinks-money { font-family: var(--serif); font-size: 16px; font-variant-numeric: tabular-nums; }
+.pill.paylinks-linked { color: var(--good); border-color: rgba(31,138,91,.3); background: rgba(31,138,91,.07); }
+.pill.paylinks-found { color: var(--ink-2); border-color: var(--border-2); background: var(--surface-2); }
+.pill.paylinks-missing { color: var(--bad); border-color: rgba(181,83,58,.3); background: var(--bad-fill); }
+.pill.paylinks-unchecked { color: var(--ink-3); }
+.pill.paylinks-stripe { color: var(--brand); border-color: rgba(81,80,246,.3); background: var(--lavbg); }
+.pill.paylinks-whop { color: var(--ink-2); border-color: var(--border-2); background: var(--surface-2); }
+.paylinks-days { display: grid; grid-template-columns: repeat(14, 1fr); gap: 4px; align-items: end; height: 90px; margin: 8px 0 4px; }
+.paylinks-days i { display: block; background: var(--lav); border-radius: 3px 3px 0 0; min-height: 2px; }
+.paylinks-days i.hi { background: var(--brand); }
+.paylinks-daylabels { display: grid; grid-template-columns: repeat(14, 1fr); gap: 4px; }
+.paylinks-daylabels span { font-family: var(--mono); font-size: 9.5px; color: var(--ink-3); text-align: center; }
+.paylinks-form { display: grid; gap: 10px; }
+.paylinks-form label { display: grid; gap: 4px; font-family: var(--mono); font-size: 10.5px; letter-spacing: .06em; text-transform: uppercase; color: var(--ink-3); }
+.paylinks-form input[type="text"], .paylinks-form input[type="password"], .paylinks-form input[type="number"], .paylinks-form input[type="url"], .paylinks-form textarea, .paylinks-form select {
+  font-family: var(--sans); font-size: 13px; font-weight: 400; letter-spacing: 0; text-transform: none; color: var(--ink); background: var(--surface); border: 1px solid var(--border-2); border-radius: var(--r-btn, 7px); padding: 7px 10px; width: 100%; box-sizing: border-box;
+}
+.paylinks-form textarea { min-height: 96px; resize: vertical; line-height: 1.45; font-family: var(--mono); font-size: 11.5px; }
+.paylinks-form input:focus, .paylinks-form textarea:focus, .paylinks-form select:focus { outline: 0; border-color: var(--brand); box-shadow: 0 0 0 3px rgba(81,80,246,.16); }
+.paylinks-form .paylinks-row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.paylinks-form .paylinks-row4 { display: grid; grid-template-columns: 2fr 1fr 1fr 1fr; gap: 10px; }
+.paylinks-form .paylinks-inline { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.paylinks-form .paylinks-check { display: flex; align-items: center; gap: 8px; text-transform: none; letter-spacing: 0; font-family: inherit; font-size: 13px; color: var(--ink); }
+.paylinks-int { display: flex; align-items: center; gap: 10px; padding: 10px 0; border-bottom: 1px solid var(--rule); flex-wrap: wrap; }
+.paylinks-int:last-child { border-bottom: 0; }
+.paylinks-int b { font-weight: 500; min-width: 70px; }
+.paylinks-int .sub { flex: 1; min-width: 200px; word-break: break-all; }
+.paylinks-code { font-family: var(--mono); font-size: 11px; background: var(--surface-3); padding: 2px 6px; border-radius: 4px; word-break: break-all; }
+.paylinks-templates { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 8px; }
+.paylinks-template { border: 1px solid var(--border); border-radius: 8px; padding: 10px; cursor: pointer; text-align: left; background: var(--surface); font-size: 12.5px; }
+.paylinks-template.active { border-color: var(--brand); box-shadow: 0 0 0 3px rgba(81,80,246,.16); }
+.paylinks-template .swatch { height: 34px; border-radius: 6px; margin-bottom: 8px; border: 1px solid var(--border); }
+.paylinks-preview { width: 100%; height: 520px; border: 1px solid var(--border); border-radius: 10px; background: var(--surface-3); }
+.paylinks-import { max-height: 320px; overflow: auto; }
+.paylinks-import label { display: flex; gap: 10px; align-items: center; padding: 8px 0; border-bottom: 1px solid var(--rule); text-transform: none; letter-spacing: 0; font-family: inherit; font-size: 13px; color: var(--ink); }
+.paylinks-step { display: grid; grid-template-columns: 28px 1fr; gap: 10px; padding: 8px 0; border-bottom: 1px solid var(--rule); font-size: 13px; }
+.paylinks-step:last-child { border-bottom: 0; }
+.paylinks-step b { font-family: var(--mono); font-size: 11px; color: var(--brand); padding-top: 2px; }
+.paylinks-step .sub { display: block; margin-top: 2px; }
+@media (max-width: 720px) { .paylinks-form .paylinks-row2, .paylinks-form .paylinks-row4 { grid-template-columns: 1fr; } .paylinks-days, .paylinks-daylabels { grid-template-columns: repeat(7, 1fr); } }

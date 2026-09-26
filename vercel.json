@@ -8,11 +8,16 @@
       "schedule": "0 9 * * *"
     }
   ],
+  "rewrites": [
+    { "source": "/ty", "destination": "/api/ty" }
+  ],
   "functions": {
     "api/refresh.js": { "maxDuration": 300, "includeFiles": "public/features/**" },
     "api/calls.js": { "maxDuration": 300, "includeFiles": "public/features/**" },
     "api/ingest.js": { "maxDuration": 300, "includeFiles": "public/features/**" },
-    "api/integrations.js": { "maxDuration": 120, "includeFiles": "public/features/**" }
+    "api/integrations.js": { "maxDuration": 120, "includeFiles": "public/features/**" },
+    "api/paylinks.js": { "maxDuration": 60, "includeFiles": "public/features/**" },
+    "api/ty.js": { "maxDuration": 30 }
   },
   "headers": [
     {

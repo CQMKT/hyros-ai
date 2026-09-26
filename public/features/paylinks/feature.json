@@ -1,0 +1,14 @@
+{
+  "id": "paylinks",
+  "name": "Payment Links",
+  "tab": "Payment Links",
+  "version": "1.0.0",
+  "description": "Stripe and Whop payment links whose thank-you page carries the buyer's email into the HYROS script, so a purchase made with a different email than the opt-in still gets attributed — plus the transaction log and a HYROS link check.",
+  "mode": "both",
+  "demo": true,
+  "server": true,
+  "style": true,
+  "needs": [],
+  "tools": [],
+  "author": "CQ Marketing"
+}

@@ -265,7 +265,8 @@ for the pure-function tests (curve normaliser, view states, budget rules).
 A feature's `server.js` runs only during `/api/refresh` and cannot add
 routes, but a feature may *depend* on routes its fork adds under `api/`
 (the Call Intelligence tab needs `/api/calls`, `/api/kb`,
-`/api/integrations` and the `/api/ingest` webhook). When that is the case:
+`/api/integrations` and the `/api/ingest` webhook; the Payment Links tab needs
+`/api/paylinks`, the public `/ty` page and `src=stripe|whop` on `/api/ingest`). When that is the case:
 
 - the feature's `SPEC.md` "Porting notes" lists every core file another
   fork must copy, and the block shape still works without them (the tab

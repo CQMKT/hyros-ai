@@ -18,8 +18,10 @@ import { kvRaw, storeConfigured } from './_store.js';
 import { encryptKey, decryptKey } from './_accounts.js';
 import { probeKey as probeLlm } from './_llm.js';
 import { newCall, normalizeTranscript, parseTimestamp } from './_calls.js';
+import { probe as probeStripe, createWebhookEndpoint, deleteWebhookEndpoint } from './_stripe.js';
+import { probe as probeWhop } from './_whop.js';
 
-export const KINDS = ['anthropic', 'fathom', 'fireflies'];
+export const KINDS = ['anthropic', 'fathom', 'fireflies', 'stripe', 'whop'];
 const intKey = (accountId) => `aihyros:acct:${accountId}:integrations`;
 const tokenKey = (token) => `aihyros:ingest:${token}`;
 const fail = (message, status, code) => Object.assign(new Error(message), { status, code });
@@ -156,7 +158,7 @@ export function callFromFireflies(t, { source = 'fireflies' } = {}) {
  * webhook registered (destination = this deployment's /api/ingest with the
  * integration's token); Fireflies is configured by hand on their side.
  */
-export async function addIntegration(accountId, { kind, apiKey, origin, model = null }) {
+export async function addIntegration(accountId, { kind, apiKey, origin, model = null, webhookSecret = null }) {
   if (!KINDS.includes(kind)) throw fail('Unknown integration.', 400, 'bad_request');
   const key = String(apiKey || '').trim();
   if (key.length < 8) throw fail('That does not look like an API key.', 400, 'bad_key');
@@ -167,16 +169,28 @@ export async function addIntegration(accountId, { kind, apiKey, origin, model = 
   }
   if (kind === 'fathom') { const r = await fathom(key, '/meetings?include_transcript=false'); label = Array.isArray(r?.items) ? `${r.items.length}+ meetings visible` : 'connected'; }
   if (kind === 'fireflies') { const r = await fireflies(key, '{ user { email name } }'); label = r?.user?.email || r?.user?.name || 'connected'; }
+  if (kind === 'stripe') { if (!/^(sk|rk)_(live|test)_/.test(key)) throw fail('Paste a Stripe secret or restricted key (sk_… / rk_…).', 400, 'bad_key'); await probeStripe(key); label = key.startsWith('rk_') ? 'restricted key' : 'secret key'; label += key.includes('_test_') ? ' (test mode)' : ' (live)'; }
+  if (kind === 'whop') { await probeWhop(key); label = 'connected'; }
 
   const items = (await readIntegrations(accountId)).filter((x) => x.kind !== kind);
   const old = (await readIntegrations(accountId)).find((x) => x.kind === kind);
   if (old?.token) await kvRaw(['DEL', tokenKey(old.token)]);
+  if (old?.kind === 'stripe' && old.webhookId) { try { await deleteWebhookEndpoint(decryptKey(old.keyEnc), old.webhookId); } catch { /* best effort */ } }
   const it = { id: `int_${randomBytes(6).toString('hex')}`, kind, label, keyEnc: encryptKey(key), createdAt: new Date().toISOString(), events: 0, lastEventAt: null, lastError: null, model: model || null };
-  if (kind === 'fathom' || kind === 'fireflies') {
+  if (['fathom', 'fireflies', 'stripe', 'whop'].includes(kind)) {
     it.token = randomBytes(16).toString('hex');
     await kvRaw(['SET', tokenKey(it.token), JSON.stringify({ accountId, id: it.id, kind })]);
   }
   if (kind === 'fireflies') it.secretEnc = encryptKey(randomBytes(12).toString('hex')); // 24 chars: Fireflies wants 16–32
+  if (kind === 'whop' && webhookSecret) it.secretEnc = encryptKey(String(webhookSecret).trim());
+  if (kind === 'stripe' && origin) {
+    try {
+      const r = await createWebhookEndpoint(key, `${origin}/api/ingest?src=stripe&t=${it.token}`);
+      it.webhookId = r.id || null;
+      if (r.secret) it.secretEnc = encryptKey(String(r.secret));
+      if (!r.secret) it.lastError = 'Stripe created the webhook endpoint but returned no signing secret — deliveries cannot be verified.';
+    } catch (err) { it.lastError = `Webhook not registered: ${err.message} (payments still record from the thank-you page).`; }
+  }
   if (kind === 'fathom' && origin) {
     try {
       const r = await fathom(key, '/webhooks', { method: 'POST', body: { destination_url: `${origin}/api/ingest?src=fathom&t=${it.token}`, triggered_for: ['my_recordings', 'shared_team_recordings'], include_transcript: true, include_summary: true } });
@@ -195,6 +209,9 @@ export async function removeIntegration(accountId, id) {
   if (!it) return false;
   if (it.kind === 'fathom' && it.webhookId) {
     try { await fathom(decryptKey(it.keyEnc), `/webhooks/${encodeURIComponent(it.webhookId)}`, { method: 'DELETE' }); } catch { /* best effort */ }
+  }
+  if (it.kind === 'stripe' && it.webhookId) {
+    try { await deleteWebhookEndpoint(decryptKey(it.keyEnc), it.webhookId); } catch { /* best effort */ }
   }
   if (it.token) await kvRaw(['DEL', tokenKey(it.token)]);
   await saveIntegrations(accountId, items.filter((x) => x.id !== id));

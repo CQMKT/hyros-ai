@@ -153,6 +153,21 @@ Fireflies (paste the webhook URL + secret into Fireflies → Settings →
 Developer settings), then edit the knowledge base. See
 [`public/features/calls/SPEC.md`](./public/features/calls/SPEC.md).
 
+**Payment Links** — the different-email attribution fix. A prospect books
+with one email and pays a Stripe (or Whop) hosted checkout with another;
+the HYROS script cannot run on Stripe's page, so the sale goes
+unattributed. Create or import Stripe payment links here: their
+after-payment redirect lands on a thank-you page this deployment hosts
+(`/ty`), which resolves the paying email from the Checkout Session, puts it
+in the page URL and renders with your HYROS universal script — HYROS then
+links the two emails. Setup: Payment Links → Setup → connect a Stripe key
+(restricted key with write on Products, Prices, Payment Links, Webhook
+Endpoints and read on Checkout Sessions; the webhook is registered for
+you) → paste the universal script → design the page → create a link. The
+Transactions view logs every sale (page + webhook) and **Verify in HYROS**
+shows whether each paying email is now a lead with a source. See
+[`public/features/paylinks/SPEC.md`](./public/features/paylinks/SPEC.md).
+
 **Accounts** — any number of HYROS accounts in one dashboard, switched from
 the top-left menu. An agency key adds every approved client account (5 per
 call) and the daily refresh rotates through the stalest ones.

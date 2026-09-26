@@ -4,6 +4,33 @@ All notable changes to the AI HYROS dashboard template are recorded here.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/)
 and the project uses [Semantic Versioning](https://semver.org/).
 
+## [Unreleased] — Payment Links (this fork)
+
+### Added
+- **Payment Links tab** (`public/features/paylinks/`) — the different-email
+  attribution fix. Stripe payment links are created (product → price →
+  link) or imported with their after-payment redirect pointed at a
+  thank-you page this deployment hosts (`/ty`). The page resolves the
+  Checkout Session, records the transaction, reloads itself once with
+  `&email=<buyer>` in the URL and renders with the account's HYROS
+  universal script in the `<head>`, so HYROS links the paying email to the
+  browser session that carries the opt-in's clicks. Five page templates,
+  logo, headline, message, order details, optional countdown redirect,
+  custom domain, Slack/Discord notifications.
+- **Transactions** from the page and from Stripe webhooks
+  (`checkout.session.*`, `payment_intent.payment_failed`,
+  `invoice.payment_failed`, `charge.refunded`; endpoint registered on
+  connect, `Stripe-Signature` verified), deduplicated on the session id;
+  **Verify in HYROS** reads the paying emails back (`hyros_get_leads`) and
+  marks each sale linked / found / missing.
+- **Whop** (experimental): connect, webhook-recorded payments, a thank-you
+  page that reads `payment_id` when Whop provides it.
+- Core routes: `api/ty.js` (public page, `/ty` rewrite), `api/paylinks.js`,
+  `api/_stripe.js`, `api/_whop.js`, `api/_paylinks.js`; `stripe`/`whop`
+  kinds in `api/_integrations.js`; `src=stripe|whop` in `api/ingest.js`;
+  `payIntel` hand-off in `api/refresh.js`; `scripts/paylinks-test.mjs` with
+  `scripts/mock-stripe.mjs` and `scripts/mock-kv.mjs` in `npm run check`.
+
 ## [Unreleased] — Call Intelligence (this fork)
 
 ### Added

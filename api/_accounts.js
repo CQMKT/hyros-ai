@@ -16,6 +16,7 @@ import { readAccounts, writeAccounts, deleteAccountData, readSnapshot, storeConf
 import { keySecrets } from './_setup.js';
 import { logEvent } from './_log.js';
 import { deleteAccountCalls } from './_calls.js';
+import { deleteAccountPay } from './_paylinks.js';
 
 export { PRIMARY_ID };
 
@@ -259,7 +260,7 @@ export async function removeAccount(id) {
   // Removing an agency removes its clients too.
   const gone = accounts.filter((a) => a.id === id || a.parentId === id).map((a) => a.id);
   await saveAccounts(accounts.filter((a) => !gone.includes(a.id)));
-  for (const g of gone) { await deleteAccountData(g); await deleteAccountCalls(g); }
+  for (const g of gone) { await deleteAccountData(g); await deleteAccountCalls(g); await deleteAccountPay(g); }
   return true;
 }
 

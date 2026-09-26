@@ -404,3 +404,22 @@ Both run against the mock in `npm run check`; the live shapes are
 `writeBack`, so a wrong shape is visible, not silent). Ask: document the
 request shape and the `status` enum of `hyros_create_call`, and whether
 `hyros_add_tags_to_leads` creates unknown tags or requires them to exist.
+
+## 19. The different-email gap, and what the script needs (Payment Links)
+
+A buyer who opts in with one email and pays a Stripe- or Whop-hosted
+checkout with another is unattributed: the universal script cannot run on
+the processor's page, and the processor integration only knows the paying
+email. What closes the gap (verified on Pingit, the same mechanism this
+fork's Payment Links tab implements): the after-payment redirect lands on
+a page that hosts the universal script and carries the paying email in its
+URL (`?email=…`, the parameter the Typeform guide documents for redirects);
+the browser still holds the HYROS session from the opt-in, so HYROS links
+the paying email to those clicks. Asks: document the URL parameters the
+universal script reads (`email`, `he`, names, phone) and the merge rule
+(when a second email joins an existing lead — `originLead`), and expose a
+server-side way to attach an email to a session id
+(`hyros_create_click` takes a `sessionId`; a lead-level equivalent would
+remove the browser hop). `hyros_get_account_tracking_script` exists in the
+tool list but its reply shape is undocumented; the tab tries it and falls
+back to a pasted script.

@@ -331,7 +331,7 @@ try {
     const appJs = await readFile(new URL('../public/app.js', import.meta.url), 'utf8');
     check('app.js scopes /api/calls, /api/kb and /api/integrations to the selected account', /ACCOUNT_SCOPED = new Set\(\[[^\]]*'\/api\/calls'[^\]]*'\/api\/kb'[^\]]*'\/api\/integrations'/.test(appJs));
     const snapSrc = await readFile(new URL('../api/_snapshot.js', import.meta.url), 'utf8');
-    check('buildSnapshot accepts callIntel and exposes it to feature steps', /callIntel = null/.test(snapSrc) && /warnings, callIntel, account/.test(snapSrc));
+    check('buildSnapshot accepts callIntel and exposes it to feature steps', /callIntel = null/.test(snapSrc) && /warnings, callIntel, (payIntel, )?account/.test(snapSrc));
     check('removing an account deletes its calls, KB and integrations', await (async () => { await accounts.removeAccount(accountId); return [...kvStore.keys()].every((key) => !key.includes(`:${accountId}:`)); })(), [...kvStore.keys()].filter((key) => key.includes(accountId)).join(', '));
   }
 } finally {

@@ -17,6 +17,7 @@ import { logEvent } from './_log.js';
 import { REFRESH_MAX_S, REFRESH_BUDGET_MS, CRON_BUDGET_MS, CRON_MIN_ACCOUNT_MS, cronAccountBudgetMs } from './_budget.js';
 import { readIndex } from './_calls.js';
 import { readKb } from './_kb.js';
+import { readIndex as readPayIndex, readLinks as readPayLinks } from './_paylinks.js';
 
 /**
  * Vercel function limit (seconds). Also declared in vercel.json so the
@@ -33,10 +34,12 @@ async function refreshAccount(accountId, steps, budgetMs) {
     : [null, null];
   // Call Intelligence: the analyzed-calls index (KV, written as calls arrive) rides into the snapshot as callIntel.
   const callIntel = storeConfigured() ? await readIndex(accountId).then(async (idx) => ({ ...idx, avatars: (await readKb(accountId)).avatars })).catch(() => null) : null;
+  // Payment Links: links + the newest transactions ride in as payIntel the same way.
+  const payIntel = storeConfigured() ? await readPayIndex(accountId).then(async (idx) => ({ links: (await readPayLinks(accountId)).map(({ token, ...l }) => ({ ...l, token })), rows: idx.rows.slice(0, 200), totals: idx.totals, updatedAt: idx.updatedAt, truncated: idx.truncated })).catch(() => null) : null;
   let snapshot;
   try {
     snapshot = await asAccount(accountId, () =>
-      buildSnapshot({ onProgress: (s) => steps.push(`${accountId}: ${s}`), prefs, previous, budgetMs, callIntel }));
+      buildSnapshot({ onProgress: (s) => steps.push(`${accountId}: ${s}`), prefs, previous, budgetMs, callIntel, payIntel }));
   } catch (err) {
     logEvent('refresh.failed', { accountId, code: err.code || err.name || 'error', message: err.message, ms: Date.now() - started });
     // Only a rejected key (401) marks the account (or its agency) invalid so
